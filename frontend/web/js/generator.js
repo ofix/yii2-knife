@@ -12,13 +12,47 @@ function rtrim(str) {
     return str.replace(/(\s*,$)/g, "");
 }
 
-let QueryGenerator = Class.extend({
+let Generator = Class.extend({
+   init:function(language,framework){
+       this.language = language;
+       this.framework = framework;
+   },
+    getLanguage(){
+       return this.language;
+    },
+    getFramework(){
+        return this.framework;
+    }
+});
+
+//全局数据暂存区
+let Knife = Class.extend({
+    init:function(){
+        this.currentTable = null;
+        this.currentField = null;
+    },
+    setCurrentTable(table){
+        this.currentTable = table;
+    },
+    getCurrentTable(){
+        return this.currentTable;
+    },
+    setCurrentField(field){
+        this.currentField = field;
+    },
+    getCurrentField(){
+        return this.currentField;
+    }
+});
+
+let QueryGenerator = Generator.extend({
     init:function(select,from,where,orderBy){
-       this.select = select;
-       this.from = from;
-       this.where = where;
-       this.orderBy = orderBy;
-       this.sqlQuery = '';
+        this._super('PHP','Yii2');
+        this.select = select;
+        this.from = from;
+        this.where = where;
+        this.orderBy = orderBy;
+        this.sqlQuery = '';
     },
     exec:function(){
         this.sqlSelect();
