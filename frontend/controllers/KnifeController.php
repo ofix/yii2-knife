@@ -38,6 +38,13 @@ class KnifeController extends Controller
         $all_tables = SqlService::getAllTable();
         return $this->success('',$all_tables);
     }
+    public function actionRule(){
+        if(!Yii::$app->request->isAjax){
+            return $this->renderAjax('rule',[]);
+        }
+        $all_tables = SqlService::getAllTable();
+        return $this->success('',$all_tables);
+    }
     public function actionTableColumns(){
         $table_name = Yii::$app->request->post('table_name');
         $columns = SqlService::getTableColumns($table_name);

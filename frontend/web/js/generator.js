@@ -17,12 +17,12 @@ let Generator = Class.extend({
        this.language = language;
        this.framework = framework;
    },
-    getLanguage(){
+   getLanguage:function(){
        return this.language;
-    },
-    getFramework(){
+   },
+   getFramework:function(){
         return this.framework;
-    }
+   }
 });
 
 //全局数据暂存区
@@ -30,19 +30,36 @@ let Knife = Class.extend({
     init:function(){
         this.currentTable = null;
         this.currentField = null;
+        this.select = [];
+        this.from = [];
+        this.where = [];
+        this.orderBy = [];
+        this.advanceQuery= [];
     },
-    setCurrentTable(table){
+    pushFromField:function(fromField){
+        this.from.push(fromField);
+    },
+    removeFromField:function(fromField){
+      let that =this;
+      $.each(this.from,function(index,value){
+            if(value.table === fromField.table
+                && value.field === fromField.field){
+                // that.from.re
+            }
+      });
+    },
+    setCurrentTable:function(table){
         this.currentTable = table;
     },
-    getCurrentTable(){
+    getCurrentTable:function(){
         return this.currentTable;
     },
-    setCurrentField(field){
+    setCurrentField:function(field){
         this.currentField = field;
     },
-    getCurrentField(){
+    getCurrentField:function(){
         return this.currentField;
-    }
+    },
 });
 
 let QueryGenerator = Generator.extend({

@@ -126,14 +126,14 @@ $config = [
         'keyStorage' => [
             'class' => 'common\components\keyStorage\KeyStorage'
         ],
-
-        'urlManagerBackend' => \yii\helpers\ArrayHelper::merge(
-            [
-                'hostInfo' => env('BACKEND_HOST_INFO'),
-                'baseUrl' => env('BACKEND_BASE_URL'),
-            ],
-            require(Yii::getAlias('@backend/config/_urlManager.php'))
-        ),
+//
+//        'urlManagerBackend' => \yii\helpers\ArrayHelper::merge(
+//            [
+//                'hostInfo' => env('BACKEND_HOST_INFO'),
+//                'baseUrl' => env('BACKEND_BASE_URL'),
+//            ],
+//            require(Yii::getAlias('@backend/config/_urlManager.php'))
+//        ),
         'urlManagerFrontend' => \yii\helpers\ArrayHelper::merge(
             [
                 'hostInfo' => env('FRONTEND_HOST_INFO'),
