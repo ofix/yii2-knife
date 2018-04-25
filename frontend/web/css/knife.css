@@ -110,6 +110,7 @@ body{
     background-color:#272822;
     color:#FFF;
     padding:10px;
+    word-wrap:break-word;
 }
 #rule-input{
     float:left;

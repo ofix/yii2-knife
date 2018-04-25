@@ -26,18 +26,41 @@ $(function(){
 
     let Rule = Class.extend({
         init:function(){
-            this.rules = [];
+            this.rules = {};
         },
         add:function(field,validator,extra=null){
-            this.rules.push({field:field,validator:validator,extra:extra});
+            if(this.rules[validator]=== undefined){
+                this.rules[validator] = [{field:field,validator:validator,extra:extra}];
+            }else{
+                if(!this.exist(field,validator,extra)) {
+                    this.rules[validator].push({field: field, validator: validator, extra: extra});
+                }
+            }
         },
-        remove:function(index){
-
+        exist:function(field,validator,extra=null){
+            let arrValidator = this.rules[validator];
+            if(arrValidator!== undefined){
+                for(i=0,len=arrValidator.length; i<len; i++){
+                    if(arrValidator[i].field === field
+                    &&arrValidator[i].validator === validator
+                    && arrValidator[i].extra === extra){
+                        arrValidator.splice(i,1);
+                        return true;
+                    }
+                }
+            }
+            return false;
         },
         generate:function(){
             let s = '';
-            $.each(this.rules,function(index,value){
-                s+=eval("let validator = new "+value.validator.firstLetterToUpperCase()+"Validator(value.field,value.extra); validator.run();");
+            $.each(this.rules,function(key,value){
+                let fields = [];
+                let extra = null;
+                $.each(value,function(k,v){
+                    fields.push(v.field);
+                    extra = v.extra;
+                });
+                s+=eval("let validator = new "+key.firstLetterToUpperCase()+"Validator(fields,extra); validator.run();");
                 s = "<p>"+s+"</p>";
             });
             return s;
@@ -52,27 +75,54 @@ $(function(){
 
     let RuleValidator = Class.extend({
        init:function(field,extra){
+           if(!isArray(field)){
+               field = [field];
+           }
            this.field = field;
            this.extra = extra;
        },
        run:function(){
-
        }
+    });
+    let TrimValidator = RuleValidator.extend({
+        init:function(field,extra){
+            this._super(field,extra);
+        },
+        run:function() {
+            let s = "[['";
+            $.each(this.field,function(index,value){
+                s+=value+"',";
+            });
+            s =s.substr(0,s.length-1);
+            s+="],'trim'],";
+            return s;
+        }
+    });
+    let DateValidator = RuleValidator.extend({
+        init:function(field,extra){
+            this._super(field,extra);
+        },
+        run:function() {
+            let s = "[['";
+            $.each(this.field,function(index,value){
+                s+= "[['";
+                s+=value+"'],";
+                s+="DateValidator::TYPE_DATETIME,'format'=>'yyyy-MM-dd HH:mm:ss','timestampAttribute'=>'"+value+"'],<br/>";
+            });
+            return s;
+        }
     });
     let RequiredValidator = RuleValidator.extend({
         init:function(field,extra){
-            if(!isArray(field)){
-                field = [field];
-            }
             this._super(field,extra);
         },
         run:function(){
-            let s = '[[';
+            let s = "[['";
             $.each(this.field,function(index,value){
-                s+=value+',';
+                s+=value+"',";
             });
             s =s.substr(0,s.length-1);
-            s+='],"required"],';
+            s+="],'required'],";
             return s;
         }
     });
@@ -81,7 +131,21 @@ $(function(){
             this._super(field,extra);
         },
         run:function(){
-            return '["'+this.field+'",'+'min=>'+extra.min+',max=>'+extra.max+'],';
+            let s = "[[";
+            $.each(this.field,function(index,value){
+                s+= "'"+value+"',";
+            });
+            s = s.substr(0,s.length-1);
+
+            if(this.extra === null){
+                return s+"],'string'],";
+            }else if(this.extra.min && this.extra.max === null){
+                return s+"],'string',"+"'min'=>"+this.extra.min+"],";
+            }else if(this.extra.min === null && this.extra.max){
+                return s+"],'string',"+"'max'=>"+this.extra.min+"],";
+            }else {
+                return s+"],'string',"+"'min'=>"+this.extra.min+",'max'=>" + this.extra.max + "],";
+            }
         }
     });
 
