@@ -36,7 +36,7 @@
     </div>
     <div id="columns"></div>
     <div id="rule-input"></div>
-    <div id="rule-code"></div>
+    <textarea title="PHP Code" id="rule-code"></textarea>
     <div id="btn-gen">generate</div>
 </div>
 </body>

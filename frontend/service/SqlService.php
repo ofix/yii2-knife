@@ -19,8 +19,7 @@ class SqlService extends Model
     }
     public static function getTableColumns($table_name){
         $db = (new Query())->select(new Expression('database()'))->all();
-        $query = (new Query())->select('column_name,data_type,column_comment,
-        column_key,extra')->from('information_schema.columns')
+        $query = (new Query())->select('*')->from('information_schema.columns')
             ->where(['table_name'=>$table_name])
             ->andWhere(['table_schema'=>$db[0]])
             ->orderBy('ordinal_position')

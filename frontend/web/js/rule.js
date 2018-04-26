@@ -1,3 +1,11 @@
+
+String.prototype.firstLetterToUpperCase = function(){
+    return this.substring(0,1).toUpperCase()+this.substring(1);
+};
+function isArray(o){
+    return Object.prototype.toString.call(o)==='[object Array]';
+}
+
 $(function(){
     $.post('/knife/index',function(response){
         let menu = new Menu(response.data,{key_title:"table_name",onClick:apiTableColumns},"#left-panel");
@@ -6,14 +14,43 @@ $(function(){
         sqlTab.show();
     });
 
+    let phpEditor = CodeMirror.fromTextArea(document.getElementById("rule-code"),{
+        lineNumbers:true,
+        matchBrackets:true,
+        theme:"monokai",
+        mode:"text/x-php",
+        readOnly:"nocursor"
+    });
+
     $(document).on('click','.rule-btn',function(event){
         $(this).siblings('.rule-active-btn').removeClass('rule-active-btn');
         $(this).addClass('rule-active-btn');
     });
 
-    String.prototype.firstLetterToUpperCase = function(){
-        return this.substring(0,1).toUpperCase()+this.substring(1);
-    };
+    $(document).on('click','.o-float-btn',function(event){
+        let validator = $('.rule-active-btn').attr('data-rule');
+        let field = $(this).html();
+        rules.add(field,validator);
+        let code = rules.generate();
+        phpEditor.setValue(code);
+        let totalLines = phpEditor.lineCount();
+        phpEditor.autoFormatRange({line:0, ch:0}, {line:totalLines});
+    });
+
+    // $(document).on('dragstart','.o-float-btn',function(event){
+    //     let e = event.originalEvent;
+    //     e.dataTransfer.setData("column",$(this).html());
+    // });
+    //
+    // $(document).on('dragover','#sql .body-i',function(event){
+    //     event.preventDefault();
+    // });
+    //
+    // $(document).on('drop','#sql .body-i',function(event){
+    //     let  e= event.originalEvent;
+    //     let column = e.dataTransfer.getData('column');
+    //     $(this).append('<div class="o-float-btn">'+column+'</div>');
+    // });
 
     let apiTableColumns = function() {
         $('.o-menu-item').bind('click', '', function (v, i) {
@@ -52,7 +89,7 @@ $(function(){
             return false;
         },
         generate:function(){
-            let s = '';
+            let s = 'public function rules()\n{\nreturn [\n';
             $.each(this.rules,function(key,value){
                 let fields = [];
                 let extra = null;
@@ -61,17 +98,14 @@ $(function(){
                     extra = v.extra;
                 });
                 s+=eval("let validator = new "+key.firstLetterToUpperCase()+"Validator(fields,extra); validator.run();");
-                s = "<p>"+s+"</p>";
+                s+="\n";
             });
+            s+= '\n];\n}\n';
             return s;
         }
     });
 
     let rules = new Rule();
-
-    function isArray(o){
-        return Object.prototype.toString.call(o)==='[object Array]';
-    }
 
     let RuleValidator = Class.extend({
        init:function(field,extra){
@@ -89,9 +123,9 @@ $(function(){
             this._super(field,extra);
         },
         run:function() {
-            let s = "[['";
+            let s = "[[";
             $.each(this.field,function(index,value){
-                s+=value+"',";
+                s+="'"+value+"',";
             });
             s =s.substr(0,s.length-1);
             s+="],'trim'],";
@@ -117,9 +151,9 @@ $(function(){
             this._super(field,extra);
         },
         run:function(){
-            let s = "[['";
+            let s = "[[";
             $.each(this.field,function(index,value){
-                s+=value+"',";
+                s+="'"+value+"',";
             });
             s =s.substr(0,s.length-1);
             s+="],'required'],";
@@ -149,41 +183,19 @@ $(function(){
         }
     });
 
-    $(document).on('click','.o-float-btn',function(event){
-        let validator = $('.rule-active-btn').attr('data-rule');
-        let field = $(this).html();
-        rules.add(field,validator);
-        let code = rules.generate();
-        $('#rule-code').html(code);
-    });
-
-    $(document).on('dragstart','.o-float-btn',function(event){
-        let e = event.originalEvent;
-        e.dataTransfer.setData("column",$(this).html());
-    });
-
-    $(document).on('dragover','#sql .body-i',function(event){
-        event.preventDefault();
-    });
-
-    $(document).on('drop','#sql .body-i',function(event){
-        let  e= event.originalEvent;
-        let column = e.dataTransfer.getData('column');
-        $(this).append('<div class="o-float-btn">'+column+'</div>');
-    });
-
     let ButtonPanel = Class.extend({
         init:function(data,options,container){
             this.data = data;
             this.options = options;
             this.containter = container;
             this.html = '';
+            this.field = options.btn_name.toUpperCase();
         },
         show:function(){
             this.beginPanel();
             let that = this;
             $.each(this.data,function(index,btn){
-               that.html += '<div class="o-float-btn" draggable="true">'+btn[that.options.btn_name]+'</div>';
+               that.html += '<div class="o-float-btn" draggable="true">'+btn[that.field]+'</div>';
             });
             this.endPanel();
             $(this.containter).html(this.html);
