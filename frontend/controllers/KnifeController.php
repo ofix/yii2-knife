@@ -32,22 +32,32 @@ class KnifeController extends Controller
         return ['message'=>$msg,'data'=>$data];
     }
     public function actionIndex(){
-        if(!Yii::$app->request->isAjax){
+        if(!Yii::$app->request->isPost){
             return $this->renderAjax('index',[]);
         }
         $all_tables = SqlService::getAllTable();
         return $this->success('',$all_tables);
     }
     public function actionRule(){
-        if(!Yii::$app->request->isAjax){
+        if(!Yii::$app->request->isPost){
             return $this->renderAjax('rule',[]);
         }
         $all_tables = SqlService::getAllTable();
         return $this->success('',$all_tables);
     }
+    public function actionQuery(){
+        if(!Yii::$app->request->isPost){
+            return $this->renderAjax('query',[]);
+        }
+        $all_tables = SqlService::getAllTable();
+        return $this->success('',$all_tables);
+    }
     public function actionTableColumns(){
-        $table_name = Yii::$app->request->post('table_name');
-        $columns = SqlService::getTableColumns($table_name);
-        return $this->success('',$columns);
+        if(Yii::$app->request->isPost) {
+            $table_name = Yii::$app->request->post('table_name');
+            $columns = SqlService::getTableColumns($table_name);
+            return $this->success('', $columns);
+        }
+        return $this->success('',new \stdClass());
     }
 }
