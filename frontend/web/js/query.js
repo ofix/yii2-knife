@@ -424,9 +424,8 @@ $(function(){
 
     let apiTableColumns = function() {
         $('.sidebar-menu li').bind('click', '', function (v, i) {
-            console.log("adfasdf");
-            let item = $(this).find('span');
-            console.log($(this)[0]);
+            $(this).siblings('.active').removeClass('active');
+            $(this).addClass('active');
             $.post('/knife/table-columns', {table_name: $(this).find('span').html()}, function (response) {
                 let panel = new ButtonPanel(response.data,{btn_name:"column_name"},"#columns");
                 panel.show();
