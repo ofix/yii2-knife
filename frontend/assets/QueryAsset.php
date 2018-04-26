@@ -24,7 +24,7 @@ class QueryAsset extends AssetBundle
     public $css = [
         'css/components.css',
         'css/query.css',
-        'css/font-awesome.css',
+//        'css/font-awesome.css',
         'css/sidebar.css',
 //        'css/jquery.mCustomScrollbar.min.css',
         'js/codemirror-5.37.0/lib/codemirror.css',
