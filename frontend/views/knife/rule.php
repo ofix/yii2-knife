@@ -35,9 +35,8 @@
         <div class="rule-btn" data-rule="safe">safe（安全）</div>
     </div>
     <div id="columns"></div>
-    <div id="rule-input"></div>
+<!--    <div id="rule-input"></div>-->
     <textarea title="PHP Code" id="rule-code"></textarea>
-    <div id="btn-gen">generate</div>
 </div>
 </body>
 </html>

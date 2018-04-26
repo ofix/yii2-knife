@@ -137,11 +137,11 @@ $(function(){
             this._super(field,extra);
         },
         run:function() {
-            let s = "[['";
+            let s = "";
             $.each(this.field,function(index,value){
-                s+= "[['";
-                s+=value+"'],";
-                s+="DateValidator::TYPE_DATETIME,'format'=>'yyyy-MM-dd HH:mm:ss','timestampAttribute'=>'"+value+"'],<br/>";
+                s+= "[[";
+                s+="'"+value+"'],";
+                s+="DateValidator::TYPE_DATETIME,'format'=>'yyyy-MM-dd HH:mm:ss','timestampAttribute'=>'"+value+"'],\n";
             });
             return s;
         }

@@ -29,7 +29,7 @@ class RuleAsset extends AssetBundle
      */
     public $css = [
         'css/components.css',
-        'css/knife.css',
+        'css/rule.css',
         'js/codemirror-5.37.0/lib/codemirror.css',
         'js/codemirror-5.37.0/theme/monokai.css',
     ];

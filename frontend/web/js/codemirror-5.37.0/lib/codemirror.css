@@ -2,14 +2,15 @@
 
 .CodeMirror {
   /* Set height, width, borders, and global font properties here */
-  float:right;
+  float:left;
   margin-top:40px;
-  width:49%;
-  margin-right:-20px;
-  min-height:460px;
+  width:100%;
+  min-height:560px;
+  box-sizing:border-box;
+  padding:10px 10px 10px 0;
   /*above customized by ofix*/
   font-family: monospace;
-  height: 300px;
+  height: 560px;
   color: black;
   font-size:16px;
   direction: ltr;
