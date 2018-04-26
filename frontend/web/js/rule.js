@@ -182,6 +182,216 @@ $(function(){
             }
         }
     });
+    let SafeValidator = RuleValidator.extend({
+        init:function(field,extra){
+            this._super(field,extra);
+        },
+        run:function(){
+            let s = "[[";
+            $.each(this.field,function(index,value){
+                s+= "'"+value+"',";
+            });
+            s = s.substr(0,s.length-1);
+            return s+"],'safe'],";
+        }
+    });
+    let UrlValidator = RuleValidator.extend({
+        init:function(field,extra){
+            this._super(field,extra);
+        },
+        run:function(){
+            let s = "[[";
+            $.each(this.field,function(index,value){
+                s+= "'"+value+"',";
+            });
+            s = s.substr(0,s.length-1);
+            s += "],'url',";
+
+            if(this.extra === null){
+                return s+"],'url','defaultScheme'=>'http'],";
+            }
+            //
+            let extra = '';
+            if(this.extra.defaultScheme){
+                extra += "'defaultScheme'=>'"+this.extra.defaultScheme+"',";
+            }
+            if(this.extra.validSchemes) {
+                extra += "'validSchemes'=>[";
+                $.each(this.extra.validSchemes,function(index,value){
+                    extra += "'"+value+"',";
+                });
+            }
+            if(this.extra.enableIDN){
+                extra += "'enableIDN'=>true,";
+            }
+            extra = extra.substr(0,s.length-1);
+            extra += "],";
+            return s += extra;
+
+        }
+    });
+
+    let NumberValidator = RuleValidator.extend({
+        init:function(field,extra){
+            this._super(field,extra);
+        },
+        run:function(){
+            let s = "[[";
+            $.each(this.field,function(index,value){
+                s+= "'"+value+"',";
+            });
+            s = s.substr(0,s.length-1);
+
+            if(this.extra === null){
+                return s+"],'number'],";
+            }else if(this.extra.min && this.extra.max === null){
+                return s+"],'number',"+"'min'=>"+this.extra.min+"],";
+            }else if(this.extra.min === null && this.extra.max){
+                return s+"],'number',"+"'max'=>"+this.extra.min+"],";
+            }else {
+                return s+"],'number',"+"'min'=>"+this.extra.min+",'max'=>" + this.extra.max + "],";
+            }
+        }
+    });
+
+    let EmailValidator = RuleValidator.extend({
+        init:function(field,extra){
+            this._super(field,extra);
+        },
+        run:function(){
+            let s = "[[";
+            $.each(this.field,function(index,value){
+                s+= "'"+value+"',";
+            });
+            s = s.substr(0,s.length-1);
+
+            if(this.extra === null){
+                return s+"],'email'],";
+            }
+            if(this.extra.allowName){
+                return s+"],'email','allowName'=>true],"
+            }
+        }
+    });
+
+    let UniqueValidator =  RuleValidator.extend({
+        init:function(field,extra){
+            this._super(field,extra);
+        },
+        run:function(){
+            let s = "[[";
+            $.each(this.field,function(index,value){
+                s+= "'"+value+"',";
+            });
+            return '';
+        }
+    });
+
+    let BooleanValidator =  RuleValidator.extend({
+        init:function(field,extra){
+            this._super(field,extra);
+        },
+        run:function(){
+            let s = "[[";
+            $.each(this.field,function(index,value){
+                s+= "'"+value+"',";
+            });
+            s = s.substr(0,s.length-1);
+
+            if(this.extra === null){
+                return s+"],'boolean'],";
+            }
+            if(this.extra.trueValue) {
+                return s+"],'boolean','trueValue'=>"+this.extra.trueValue+",'falseValue'=>"+this.extra.falseValue+"],";
+            }
+        }
+    });
+
+    let CaptchaValidator = RuleValidator.extend({
+        init:function(field,extra){
+            this._super(field,extra);
+        },
+        run:function(){
+            let s = "[[";
+            $.each(this.field,function(index,value){
+                s+= "'"+value+"',";
+            });
+            s = s.substr(0,s.length-1);
+
+            if(this.extra === null){
+                return s+"],'captcha'],";
+            }
+            if(this.extra.caseSensitive) {
+                return s+"],'captcha','caseSensitive'=>true],";
+            }
+        }
+    });
+
+    let DefaultValidator = RuleValidator.extend({
+        init:function(field,extra){
+            this._super(field,extra);
+        },
+        run:function(){
+            let s = "[[";
+            $.each(this.field,function(index,value){
+                s+= "'"+value+"',";
+            });
+            s = s.substr(0,s.length-1);
+
+            if(this.extra === null){
+                return s+"],'default','value'=>null],";
+            }
+            if(this.extra.value) {
+                return s+"],'default'," + "'value'=>'" + this.extra.value + "'],";
+            }
+        }
+    });
+
+    let DoubleValidator = RuleValidator.extend({
+        init:function(field,extra){
+            this._super(field,extra);
+        },
+        run:function(){
+            let s = "[[";
+            $.each(this.field,function(index,value){
+                s+= "'"+value+"',";
+            });
+            s = s.substr(0,s.length-1);
+
+            if(this.extra === null){
+                return s+"],'double'],";
+            }else if(this.extra.min && this.extra.max === null){
+                return s+"],'double',"+"'min'=>"+this.extra.min+"],";
+            }else if(this.extra.min === null && this.extra.max){
+                return s+"],'double',"+"'max'=>"+this.extra.min+"],";
+            }else {
+                return s+"],'double',"+"'min'=>"+this.extra.min+",'max'=>" + this.extra.max + "],";
+            }
+        }
+    });
+
+    let IntegerValidator = RuleValidator.extend({
+        init:function(field,extra){
+            this._super(field,extra);
+        },
+        run:function(){
+            let s = "[[";
+            $.each(this.field,function(index,value){
+                s+= "'"+value+"',";
+            });
+            s = s.substr(0,s.length-1);
+
+            if(this.extra === null){
+                return s+"],'integer'],";
+            }else if(this.extra.min && this.extra.max === null){
+                return s+"],'integer',"+"'min'=>"+this.extra.min+"],";
+            }else if(this.extra.min === null && this.extra.max){
+                return s+"],'integer',"+"'max'=>"+this.extra.min+"],";
+            }else {
+                return s+"],'integer',"+"'min'=>"+this.extra.min+",'max'=>" + this.extra.max + "],";
+            }
+        }
+    });
 
     let ButtonPanel = Class.extend({
         init:function(data,options,container){
