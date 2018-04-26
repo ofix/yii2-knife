@@ -7,6 +7,9 @@
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1">
 <body>
+<div class="search">
+    <input placeholder="please enter keyword" type="text"/>
+</div>
 <div id="left-panel"></div>
 <div id="right-panel">
     <div id="rule-toolbar">

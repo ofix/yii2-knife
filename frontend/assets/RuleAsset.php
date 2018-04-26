@@ -30,6 +30,7 @@ class RuleAsset extends AssetBundle
     public $css = [
         'css/components.css',
         'css/rule.css',
+        'css/sidebar.css',
         'js/codemirror-5.37.0/lib/codemirror.css',
         'js/codemirror-5.37.0/theme/monokai.css',
     ];

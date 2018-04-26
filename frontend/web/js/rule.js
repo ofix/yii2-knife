@@ -378,12 +378,27 @@ let Menu = Class.extend({
 });
 let rules = new Rule();
 
+function padZero(num, length) {
+    return ((new Array(length)).join('0') + num).slice(-length);
+}
+function makeTableMenu(data){
+    let menu = '<ul class="sidebar-menu">';
+    $.each(data,function(i,v){
+        active = (i===0)?' active':'';
+        menu += '<li><a><span>'+v["table_name"]+'</span></a></li>';
+    });
+    menu+='</ul>';
+    $('#left-panel').html(menu);
+}
+
 $(function(){
     $.post('/knife/index',function(response){
-        let menu = new Menu(response.data,{key_title:"table_name",onClick:apiTableColumns},"#left-panel");
-        menu.show();
+        makeTableMenu(response.data);
+        // let menu = new Menu(response.data,{key_title:"table_name",onClick:apiTableColumns},"#left-panel");
+        // menu.show();
         let sqlTab = new TabCtrl({container:'#sql',title:["SELECT","FROM","JOIN","WHERE","ORDER"],width:"50%"});
         sqlTab.show();
+        apiTableColumns();
     });
 
     let phpEditor = CodeMirror.fromTextArea(document.getElementById("rule-code"),{
@@ -410,12 +425,15 @@ $(function(){
     });
 
     let apiTableColumns = function() {
-        $('.o-menu-item').bind('click', '', function (v, i) {
-            $.post('/knife/table-columns', {table_name: $(this).html()}, function (response) {
+        $('.sidebar-menu li').bind('click', '', function (v, i) {
+            $(this).siblings('.active').removeClass('active');
+            $(this).addClass('active');
+            $.post('/knife/table-columns', {table_name: $(this).find('span').html()}, function (response) {
                 let panel = new ButtonPanel(response.data,{btn_name:"column_name"},"#columns");
                 panel.show();
             });
         });
+        $('.sidebar-menu li:first').trigger('click');
     };
 
     // $(document).on('dragstart','.o-float-btn',function(event){
