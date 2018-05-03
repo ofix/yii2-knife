@@ -385,7 +385,7 @@ function makeTableMenu(data){
     let menu = '<ul class="sidebar-menu">';
     $.each(data,function(i,v){
         active = (i===0)?' active':'';
-        menu += '<li><a><span>'+v["table_name"]+'</span></a></li>';
+        menu += '<li><a><span>'+v["TABLE_NAME"]+'</span></a></li>';
     });
     menu+='</ul>';
     $('#left-panel').html(menu);
@@ -406,7 +406,7 @@ $(function(){
         matchBrackets:true,
         theme:"monokai",
         mode:"text/x-php",
-        readOnly:"nocursor"
+        // readOnly:"nocursor"
     });
 
     $(document).on('click','.rule-btn',function(event){
@@ -429,7 +429,7 @@ $(function(){
             $(this).siblings('.active').removeClass('active');
             $(this).addClass('active');
             $.post('/knife/table-columns', {table_name: $(this).find('span').html()}, function (response) {
-                let panel = new ButtonPanel(response.data,{btn_name:"column_name"},"#columns");
+                let panel = new ButtonPanel(response.data,{btn_name:"COLUMN_NAME"},"#columns");
                 panel.show();
             });
         });

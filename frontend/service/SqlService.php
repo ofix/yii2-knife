@@ -11,7 +11,7 @@ class SqlService extends Model
     public static function getAllTable()
     {
         $db = (new Query())->select(new Expression('database()'))->all();
-        $query = (new Query())->select('table_name,engine,table_comment,create_time')
+        $query = (new Query())->select('*')
             ->from('information_schema.tables')
             ->where(['table_schema'=> $db[0]])
             ->all();

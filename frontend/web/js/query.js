@@ -5,326 +5,138 @@ String.prototype.firstLetterToUpperCase = function(){
 function isArray(o){
     return Object.prototype.toString.call(o)==='[object Array]';
 }
-let Rule = Class.extend({
-    init:function(){
-        this.rules = {};
-    },
-    add:function(field,validator,extra=null){
-        if(this.rules[validator]=== undefined){
-            this.rules[validator] = [{field:field,validator:validator,extra:extra}];
+let phpEditor = null;
+let SqlGenerator = Class.extend({
+   init:function(){
+       this.select = {};
+       this.from = {};
+       this.join = {};
+       this.where = {};
+       this.orderBy = {};
+   },
+    addSelect:function(table,field,type,type_extra,len,zh_name){
+       let key = table+field;
+        if(this.select[key]=== undefined){
+            this.select[key] = [{table:table,field:field,type:type,type_extra:type_extra,len:len,zh_name:zh_name}];
         }else{
-            if(!this.exist(field,validator,extra)) {
-                this.rules[validator].push({field: field, validator: validator, extra: extra});
-            }
+            delete this.select[key];
         }
     },
-    exist:function(field,validator,extra=null){
-        let arrValidator = this.rules[validator];
-        if(arrValidator!== undefined){
-            for(i=0,len=arrValidator.length; i<len; i++){
-                if(arrValidator[i].field === field
-                    &&arrValidator[i].validator === validator
-                    && arrValidator[i].extra === extra){
-                    arrValidator.splice(i,1);
-                    return true;
-                }
-            }
+    addFrom:function(table,field){
+        this.from[0] = {table:table,field:field};
+    },
+    addJoin:function(table,field,join_method){
+        let key = join_method+table;
+        if(this.join[key]=== undefined){
+            this.join[key] = [{join_method:join_method,table:table,condition:condition}];
+        }else{
+            delete this.join[key];
         }
-        return false;
+    },
+    addWhere:function(table,field,type,type_extra,len,zh_name){
+        let key = table+field;
+        if(this.where[key]=== undefined){
+            this.where[key] = [{table:table,field:field,type:type,type_extra:type_extra,len:len,zh_name:zh_name}];
+        }else{
+            delete this.where[key];
+        }
+    },
+    addOrderBy:function(table,field,type,type_extra,len,zh_name,asc){
+        let key = table+field+asc;
+        if(this.orderBy[key]=== undefined){
+            this.orderBy[key] = [{table:table,field:field,asc:asc}];
+        }else{
+            delete this.orderBy[key];
+        }
+    },
+    needExpression:function(){
+        let need = false;
+        $.each(this.select,function(i,v){
+            $.each(v,function(key,value){
+                if(v.type_extra === 'image'
+                    || v.type_extra ==='time'
+                ||v.type_extra === 'date'){
+                    need = true;
+                    return false;
+                }
+            });
+            if(need){
+                return false;
+            }
+        });
+        return need;
+    },
+    getWhereCondition:function(){
+
     },
     generate:function(){
-        let s = 'public function rules()\n{\nreturn [\n';
-        $.each(this.rules,function(key,value){
-            let fields = [];
-            let extra = null;
-            $.each(value,function(k,v){
-                fields.push(v.field);
-                extra = v.extra;
+        let s = 'public function Search($params){\n';
+        let exprLeft = this.needExpression()?'new Expression(':'';
+        let exprRight = this.needExpression()?')':'';
+        s+= '$query = (new Query())->select('+exprLeft+'"';
+        let len = 0;
+        for(let ele in this.select){
+            len ++;
+        }
+        let i=0;
+        $.each(this.select,function(key,value){
+            let comma = (i === len-1)?"":",";
+            i++;
+           $.each(value,function(k,v){
+               if(v.type_extra === 'time'
+                    || v.type_extra === 'date'
+                    || v.field === 'created_at'
+                    || v.field === 'updated_at'){
+                   s += 'FROM_UNIXTIME('+v.table + '.' + v.field
+                       + ',"%Y-%m-%d %H:%i:%S") AS '+v.field+comma+' /* '+v.zh_name+" */\n";
+               }else {
+                   s += v.table + '.' + v.field+comma+' /* '+v.zh_name+" */\n";
+               }
+           });
+        });
+        // s =s.substr(0,s.length-1);
+        s+= '"'+exprRight+')\n';
+        if(this.from.length) {
+            s += '->from("';
+            s += this.from[0].table + "." + this.from[0].field + '")\n';
+        }
+        $.each(this.join,function(key,value){
+            $.each(value,function(i,v){
+                s+="->"+v.join_method+'("'+v.table+',"'+v.condition+'")\n';
             });
-            s+=eval("let validator = new "+key.firstLetterToUpperCase()+"Validator(fields,extra); validator.run();");
-            s+="\n";
         });
-        s+= '\n];\n}\n';
-        return s;
-    }
-});
-let RuleValidator = Class.extend({
-    init:function(field,extra){
-        if(!isArray(field)){
-            field = [field];
-        }
-        this.field = field;
-        this.extra = extra;
-    },
-    run:function(){
-    }
-});
-let TrimValidator = RuleValidator.extend({
-    init:function(field,extra){
-        this._super(field,extra);
-    },
-    run:function() {
-        let s = "[[";
-        $.each(this.field,function(index,value){
-            s+="'"+value+"',";
-        });
-        s =s.substr(0,s.length-1);
-        s+="],'trim'],";
-        return s;
-    }
-});
-let DateValidator = RuleValidator.extend({
-    init:function(field,extra){
-        this._super(field,extra);
-    },
-    run:function() {
-        let s = "";
-        $.each(this.field,function(index,value){
-            s+= "[[";
-            s+="'"+value+"'],";
-            s+="DateValidator::TYPE_DATETIME,'format'=>'yyyy-MM-dd HH:mm:ss','timestampAttribute'=>'"+value+"'],\n";
-        });
-        return s;
-    }
-});
-let RequiredValidator = RuleValidator.extend({
-    init:function(field,extra){
-        this._super(field,extra);
-    },
-    run:function(){
-        let s = "[[";
-        $.each(this.field,function(index,value){
-            s+="'"+value+"',";
-        });
-        s =s.substr(0,s.length-1);
-        s+="],'required'],";
-        return s;
-    }
-});
-let StringValidator = RuleValidator.extend({
-    init:function(field,extra){
-        this._super(field,extra);
-    },
-    run:function(){
-        let s = "[[";
-        $.each(this.field,function(index,value){
-            s+= "'"+value+"',";
-        });
-        s = s.substr(0,s.length-1);
-
-        if(this.extra === null){
-            return s+"],'string'],";
-        }else if(this.extra.min && this.extra.max === null){
-            return s+"],'string',"+"'min'=>"+this.extra.min+"],";
-        }else if(this.extra.min === null && this.extra.max){
-            return s+"],'string',"+"'max'=>"+this.extra.min+"],";
-        }else {
-            return s+"],'string',"+"'min'=>"+this.extra.min+",'max'=>" + this.extra.max + "],";
-        }
-    }
-});
-let SafeValidator = RuleValidator.extend({
-    init:function(field,extra){
-        this._super(field,extra);
-    },
-    run:function(){
-        let s = "[[";
-        $.each(this.field,function(index,value){
-            s+= "'"+value+"',";
-        });
-        s = s.substr(0,s.length-1);
-        return s+"],'safe'],";
-    }
-});
-let UrlValidator = RuleValidator.extend({
-    init:function(field,extra){
-        this._super(field,extra);
-    },
-    run:function(){
-        let s = "[[";
-        $.each(this.field,function(index,value){
-            s+= "'"+value+"',";
-        });
-        s = s.substr(0,s.length-1);
-        s += "],'url',";
-
-        if(this.extra === null){
-            return s+"],'url','defaultScheme'=>'http'],";
-        }
-        //
-        let extra = '';
-        if(this.extra.defaultScheme){
-            extra += "'defaultScheme'=>'"+this.extra.defaultScheme+"',";
-        }
-        if(this.extra.validSchemes) {
-            extra += "'validSchemes'=>[";
-            $.each(this.extra.validSchemes,function(index,value){
-                extra += "'"+value+"',";
+        $.each(this.where,function(key,value){
+            $.each(value,function(i,v){
+                if(v.type ==='char' || v.type === 'varchar'
+                || v.type==='text'){
+                    s += '->andFilterWhere(["like","' + v.table + '.' + v.field + '",$params["'+v.field+'"]])\n';
+                }else if(v.field === 'created_at'
+                    || v.field ==='updated_at'){
+                    s += '->andFilterWhere([">=","' + v.table + '.' + v.field + '",$params["'+v.field+'"]])\n';
+                }else{
+                    s += '->andFilterWhere(["' + v.table + '.' + v.field + '"=>$params["'+v.field+'"]])\n';
+                }
             });
-        }
-        if(this.extra.enableIDN){
-            extra += "'enableIDN'=>true,";
-        }
-        extra = extra.substr(0,s.length-1);
-        extra += "],";
-        return s += extra;
-
-    }
-});
-let NumberValidator = RuleValidator.extend({
-    init:function(field,extra){
-        this._super(field,extra);
-    },
-    run:function(){
-        let s = "[[";
-        $.each(this.field,function(index,value){
-            s+= "'"+value+"',";
         });
-        s = s.substr(0,s.length-1);
+        if(this.orderBy) {
+            s += '->orderBy("';
+            $.each(this.orderBy, function (key, value) {
+                $.each(value, function (i, v) {
+                    s += v.table + '.' + v.field + " ASC,";
+                });
+            });
+            s = s.substr(0, s.length - 1);
+            s += '");';
+        }
+        phpEditor.setValue(s);
+        let totalLines = phpEditor.lineCount();
+        phpEditor.autoFormatRange({line:0, ch:0}, {line:totalLines});
+    }
+});
 
-        if(this.extra === null){
-            return s+"],'number'],";
-        }else if(this.extra.min && this.extra.max === null){
-            return s+"],'number',"+"'min'=>"+this.extra.min+"],";
-        }else if(this.extra.min === null && this.extra.max){
-            return s+"],'number',"+"'max'=>"+this.extra.min+"],";
-        }else {
-            return s+"],'number',"+"'min'=>"+this.extra.min+",'max'=>" + this.extra.max + "],";
-        }
-    }
-});
-let EmailValidator = RuleValidator.extend({
-    init:function(field,extra){
-        this._super(field,extra);
-    },
-    run:function(){
-        let s = "[[";
-        $.each(this.field,function(index,value){
-            s+= "'"+value+"',";
-        });
-        s = s.substr(0,s.length-1);
+let current_table = null;
+let current_field = null;
 
-        if(this.extra === null){
-            return s+"],'email'],";
-        }
-        if(this.extra.allowName){
-            return s+"],'email','allowName'=>true],"
-        }
-    }
-});
-let UniqueValidator =  RuleValidator.extend({
-    init:function(field,extra){
-        this._super(field,extra);
-    },
-    run:function(){
-        let s = "[[";
-        $.each(this.field,function(index,value){
-            s+= "'"+value+"',";
-        });
-        return '';
-    }
-});
-let BooleanValidator =  RuleValidator.extend({
-    init:function(field,extra){
-        this._super(field,extra);
-    },
-    run:function(){
-        let s = "[[";
-        $.each(this.field,function(index,value){
-            s+= "'"+value+"',";
-        });
-        s = s.substr(0,s.length-1);
-
-        if(this.extra === null){
-            return s+"],'boolean'],";
-        }
-        if(this.extra.trueValue) {
-            return s+"],'boolean','trueValue'=>"+this.extra.trueValue+",'falseValue'=>"+this.extra.falseValue+"],";
-        }
-    }
-});
-let CaptchaValidator = RuleValidator.extend({
-    init:function(field,extra){
-        this._super(field,extra);
-    },
-    run:function(){
-        let s = "[[";
-        $.each(this.field,function(index,value){
-            s+= "'"+value+"',";
-        });
-        s = s.substr(0,s.length-1);
-
-        if(this.extra === null){
-            return s+"],'captcha'],";
-        }
-        if(this.extra.caseSensitive) {
-            return s+"],'captcha','caseSensitive'=>true],";
-        }
-    }
-});
-let DefaultValidator = RuleValidator.extend({
-    init:function(field,extra){
-        this._super(field,extra);
-    },
-    run:function(){
-        let s = "[[";
-        $.each(this.field,function(index,value){
-            s+= "'"+value+"',";
-        });
-        s = s.substr(0,s.length-1);
-
-        if(this.extra === null){
-            return s+"],'default','value'=>null],";
-        }
-        if(this.extra.value) {
-            return s+"],'default'," + "'value'=>'" + this.extra.value + "'],";
-        }
-    }
-});
-let DoubleValidator = RuleValidator.extend({
-    init:function(field,extra){
-        this._super(field,extra);
-    },
-    run:function(){
-        let s = "[[";
-        $.each(this.field,function(index,value){
-            s+= "'"+value+"',";
-        });
-        s = s.substr(0,s.length-1);
-
-        if(this.extra === null){
-            return s+"],'double'],";
-        }else if(this.extra.min && this.extra.max === null){
-            return s+"],'double',"+"'min'=>"+this.extra.min+"],";
-        }else if(this.extra.min === null && this.extra.max){
-            return s+"],'double',"+"'max'=>"+this.extra.min+"],";
-        }else {
-            return s+"],'double',"+"'min'=>"+this.extra.min+",'max'=>" + this.extra.max + "],";
-        }
-    }
-});
-let IntegerValidator = RuleValidator.extend({
-    init:function(field,extra){
-        this._super(field,extra);
-    },
-    run:function(){
-        let s = "[[";
-        $.each(this.field,function(index,value){
-            s+= "'"+value+"',";
-        });
-        s = s.substr(0,s.length-1);
-
-        if(this.extra === null){
-            return s+"],'integer'],";
-        }else if(this.extra.min && this.extra.max === null){
-            return s+"],'integer',"+"'min'=>"+this.extra.min+"],";
-        }else if(this.extra.min === null && this.extra.max){
-            return s+"],'integer',"+"'max'=>"+this.extra.min+"],";
-        }else {
-            return s+"],'integer',"+"'min'=>"+this.extra.min+",'max'=>" + this.extra.max + "],";
-        }
-    }
-});
 let ButtonPanel = Class.extend({
     init:function(data,options,container){
         this.data = data;
@@ -336,8 +148,25 @@ let ButtonPanel = Class.extend({
     show:function(){
         this.beginPanel();
         let that = this;
-        $.each(this.data,function(index,btn){
-            that.html += '<div class="o-float-btn" draggable="true">'+btn[that.field]+'</div>';
+        $.each(this.data,function(index,fields){
+            let comment = fields["COLUMN_COMMENT"];
+            let column_type = fields["COLUMN_TYPE"];
+            let pattern = /(\w+)\(*(\d+)*\)*/;
+            let result = column_type.match(pattern);
+            let field_type = null;
+            let field_len =-1;
+            if(result !== null){
+                field_type = result[1];
+                field_len = result[2]===undefined?-1:result[2];
+            }
+            let cmt = comment.split(",");
+            let zh_name = cmt[0]===""?fields[that.field]:cmt[0];
+            let type_x = cmt[1]===undefined?"":cmt[1];
+            that.html += '<div class="o-float-btn" data-zh="'+zh_name+'" data-field="'
+                +fields[that.field]+'" data-type="'
+                +field_type+'" data-len="'
+                +field_len+'" data-x="'+type_x+'">'
+                +fields[that.field]+'</div>';
         });
         this.endPanel();
         $(this.containter).html(this.html);
@@ -349,34 +178,6 @@ let ButtonPanel = Class.extend({
         this.html += '</div>';
     }
 });
-let Menu = Class.extend({
-    init:function(data,options,container){
-        this.data = data;
-        this.options = options;
-        this.containter= container;
-        this.html = '';
-    },
-    show:function(){
-        this.beginMenu();
-        let key = this.options.key_title;
-        let that = this;
-        $.each(this.data,function(index,menu){
-            let activeMenu = index===0? "o-active-menu-item":"";
-            that.html+= '<div class="o-menu-item ' +activeMenu+'">'+menu[key]+"</div>";
-        });
-        this.endMenu();
-        $(this.containter).html(this.html);
-        this.options.onClick();
-        $(".o-menu-item:first").trigger('click');
-    },
-    beginMenu:function(){
-        this.html += '<div class="o-menu">';
-    },
-    endMenu:function(){
-        this.html += '</div>';
-    }
-});
-let rules = new Rule();
 function padZero(num, length) {
     return ((new Array(length)).join('0') + num).slice(-length);
 }
@@ -384,27 +185,40 @@ function makeTableMenu(data){
     let menu = '<ul class="sidebar-menu">';
     $.each(data,function(i,v){
         active = (i===0)?' active':'';
-        menu += '<li><a><span>'+v["table_name"]+'</span></a></li>';
+        menu += '<li><a><span>'+v["TABLE_NAME"]+'</span></a></li>';
     });
     menu+='</ul>';
     $('#left-panel').html(menu);
 }
-$(function(){
-    $.post('/knife/index',function(response){
-        // let menu = new Menu(response.data,{key_title:"table_name",onClick:apiTableColumns},"#left-panel");
-        // menu.show();
-        makeTableMenu(response.data);
-        let sqlTab = new TabCtrl({container:'#sql',title:["SELECT","FROM","JOIN","WHERE","ORDER"],width:"50%"});
-        sqlTab.show();
-        apiTableColumns();
-    });
 
-    let phpEditor = CodeMirror.fromTextArea(document.getElementById("rule-code"),{
+let sqlGenerator = new SqlGenerator();
+
+$(function(){
+        phpEditor = CodeMirror.fromTextArea(document.getElementById("rule-code"),{
         lineNumbers:true,
         matchBrackets:true,
         theme:"monokai",
         mode:"text/x-php",
-        readOnly:"nocursor"
+        // readOnly:"nocursor"
+    });
+
+    let apiTableColumns = function() {
+        $('.sidebar-menu li').bind('click', '', function (v, i) {
+            $(this).siblings('.active').removeClass('active');
+            $(this).addClass('active');
+            current_table = $(this).find('span').html();
+            $.post('/knife/table-columns', {table_name:current_table}, function (response) {
+                let panel = new ButtonPanel(response.data,{btn_name:"column_name"},"#columns");
+                panel.show();
+            });
+        }).first().trigger('click');
+    };
+
+    $.post('/knife/index',function(response){
+        makeTableMenu(response.data);
+        let sqlTab = new TabCtrl({container:'#sql',title:["SELECT","FROM","JOIN","WHERE","ORDER"],width:"50%"});
+        sqlTab.show();
+        apiTableColumns();
     });
 
     $(document).on('click','.rule-btn',function(event){
@@ -413,24 +227,73 @@ $(function(){
     });
 
     $(document).on('click','.o-float-btn',function(event){
-        let validator = $('.rule-active-btn').attr('data-rule');
-        let field = $(this).html();
-        rules.add(field,validator);
-        let code = rules.generate();
-        phpEditor.setValue(code);
-        let totalLines = phpEditor.lineCount();
-        phpEditor.autoFormatRange({line:0, ch:0}, {line:totalLines});
+        let sql = $('.tab-ctrl-head>div.active').attr('data-rule');
+        sql = sql.split(' ');
+        current_field = $(this).attr('data-field');
+        zh = $(this).attr('data-zh');
+        type = $(this).attr('data-type');
+        len = $(this).attr('data-len');
+        typex = $(this).attr('data-x');
+        $('.tab-ctrl-body>div.active').append('<div class="sql-select-btn" data-zh="'+zh+'" data-field="'
+            +current_field+'">'+current_table+"."+current_field+'</div>');
+        let extra = sql[1]?sql[1]:'';
+        eval("sqlGenerator.add"+sql[0]+'("'+current_table+'","'+current_field
+            +'","'+type+'","'+typex+'",'+len+',"'+zh+'")');
+        sqlGenerator.generate();
     });
 
-    let apiTableColumns = function() {
-        $('.sidebar-menu li').bind('click', '', function (v, i) {
-            $(this).siblings('.active').removeClass('active');
-            $(this).addClass('active');
-            $.post('/knife/table-columns', {table_name: $(this).find('span').html()}, function (response) {
-                let panel = new ButtonPanel(response.data,{btn_name:"column_name"},"#columns");
-                panel.show();
-            });
-        });
-    };
+    let in_zh = false;
 
+    $(document).on('click','#btn-change-name',function(event){
+       $btns = $('.o-float-btn');
+       in_zh = !in_zh;
+       $btns.each(function(i,v){
+          $(this).html($(this).attr(in_zh?'data-zh':'data-field'));
+       });
+    });
+
+    $(document).on('click','.tab-ctrl-head>div',function(event){
+        $(this).siblings('.active').removeClass('active');
+        let i = $(this).index();
+        $(this).addClass('active');
+        $('.tab-ctrl-body>div.active').removeClass('active');
+        $('.tab-ctrl-body>div').eq(i).addClass('active');
+    });
+
+
+    // let wxPayGenerator = Class.extend({
+    //     init:function () {
+    //         this.para = ["app_id","mch_id","device_info","nonce_str","sign","sign_type","body",
+    //             "detail","attach","out_trade_no", "fee_type","total_fee","spbill_create_ip",
+    //             "time_start","time_expire","goods_tag","notify_url","trade_type","product_id","limit_pay",
+    //             "openid"];
+    //     },
+    //     run:function(){
+    //         //生成GEI/SET/EXIST
+    //         s='';
+    //         let that = this;
+    //         $.each(this.para,function(index,value){
+    //             s+='public function set'+that.firstUpper(that.toPara(value))+'($'+that.toPara(value)+'){\n';
+    //             s+='$this->para["'+value+'"]=$'+that.toPara(value)+";\n";
+    //             s+='}\n';
+    //             s+='public function get'+that.firstUpper(that.toPara(value))+'(){\n';
+    //             s+='return $this->para["'+value+'"];\n';
+    //             s+='}\n';
+    //             s+='public function '+that.toPara(value)+'Exist(){\n';
+    //             s+='return array_key_exists("'+value+'",$this->para);\n';
+    //             s+='}\n';
+    //         });
+    //         phpEditor.setValue(s);
+    //         let totalLines = phpEditor.lineCount();
+    //         phpEditor.autoFormatRange({line:0, ch:0}, {line:totalLines});
+    //     },
+    //     toPara:function(value){
+    //         return value.replace(/\_(\w)/g, function(all, letter){
+    //             return letter.toUpperCase();
+    //         });
+    //     },
+    //     firstUpper:function(str){
+    //         return  str.substring(0,1).toUpperCase()+str.substring(1);
+    //     }
+    // });
 });
