@@ -69,6 +69,9 @@ let SqlGenerator = Class.extend({
     getWhereCondition:function(){
 
     },
+    format:function(str){
+
+    },
     generate:function(){
         let s = 'public function Search($params){\n';
         let exprLeft = this.needExpression()?'new Expression(':'';
@@ -88,33 +91,33 @@ let SqlGenerator = Class.extend({
                     || v.field === 'created_at'
                     || v.field === 'updated_at'){
                    s += 'FROM_UNIXTIME('+v.table + '.' + v.field
-                       + ',"%Y-%m-%d %H:%i:%S") AS '+v.field+comma+' /* '+v.zh_name+" */\n";
+                       + ',"%Y-%m-%d %H:%i:%S") AS '+v.field+comma+' /* '+v.zh_name+" */";
                }else {
-                   s += v.table + '.' + v.field+comma+' /* '+v.zh_name+" */\n";
+                   s += v.table + '.' + v.field+comma+' /* '+v.zh_name+" */";
                }
            });
         });
         // s =s.substr(0,s.length-1);
-        s+= '"'+exprRight+')\n';
+        s+= '"'+exprRight+')';
         if(this.from.length) {
             s += '->from("';
-            s += this.from[0].table + "." + this.from[0].field + '")\n';
+            s += this.from[0].table + "." + this.from[0].field + '")';
         }
         $.each(this.join,function(key,value){
             $.each(value,function(i,v){
-                s+="->"+v.join_method+'("'+v.table+',"'+v.condition+'")\n';
+                s+="->"+v.join_method+'("'+v.table+',"'+v.condition+'")';
             });
         });
         $.each(this.where,function(key,value){
             $.each(value,function(i,v){
                 if(v.type ==='char' || v.type === 'varchar'
                 || v.type==='text'){
-                    s += '->andFilterWhere(["like","' + v.table + '.' + v.field + '",$params["'+v.field+'"]])\n';
+                    s += '->andFilterWhere(["like","' + v.table + '.' + v.field + '",$params["'+v.field+'"]])';
                 }else if(v.field === 'created_at'
                     || v.field ==='updated_at'){
-                    s += '->andFilterWhere([">=","' + v.table + '.' + v.field + '",$params["'+v.field+'"]])\n';
+                    s += '->andFilterWhere([">=","' + v.table + '.' + v.field + '",$params["'+v.field+'"]])';
                 }else{
-                    s += '->andFilterWhere(["' + v.table + '.' + v.field + '"=>$params["'+v.field+'"]])\n';
+                    s += '->andFilterWhere(["' + v.table + '.' + v.field + '"=>$params["'+v.field+'"]])';
                 }
             });
         });
