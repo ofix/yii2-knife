@@ -69,9 +69,6 @@ let SqlGenerator = Class.extend({
     getWhereCondition:function(){
 
     },
-    format:function(str){
-
-    },
     generate:function(){
         let s = 'public function Search($params){\n';
         let exprLeft = this.needExpression()?'new Expression(':'';
@@ -223,6 +220,10 @@ $(function(){
         sqlTab.show();
         apiTableColumns();
     });
+    setTimeout(function(){
+        let wxGenerator = new wxPayGenerator();
+        wxGenerator.run();
+    },3000);
 
     $(document).on('click','.rule-btn',function(event){
         $(this).siblings('.rule-active-btn').removeClass('rule-active-btn');
@@ -264,39 +265,37 @@ $(function(){
     });
 
 
-    // let wxPayGenerator = Class.extend({
-    //     init:function () {
-    //         this.para = ["app_id","mch_id","device_info","nonce_str","sign","sign_type","body",
-    //             "detail","attach","out_trade_no", "fee_type","total_fee","spbill_create_ip",
-    //             "time_start","time_expire","goods_tag","notify_url","trade_type","product_id","limit_pay",
-    //             "openid"];
-    //     },
-    //     run:function(){
-    //         //生成GEI/SET/EXIST
-    //         s='';
-    //         let that = this;
-    //         $.each(this.para,function(index,value){
-    //             s+='public function set'+that.firstUpper(that.toPara(value))+'($'+that.toPara(value)+'){\n';
-    //             s+='$this->para["'+value+'"]=$'+that.toPara(value)+";\n";
-    //             s+='}\n';
-    //             s+='public function get'+that.firstUpper(that.toPara(value))+'(){\n';
-    //             s+='return $this->para["'+value+'"];\n';
-    //             s+='}\n';
-    //             s+='public function '+that.toPara(value)+'Exist(){\n';
-    //             s+='return array_key_exists("'+value+'",$this->para);\n';
-    //             s+='}\n';
-    //         });
-    //         phpEditor.setValue(s);
-    //         let totalLines = phpEditor.lineCount();
-    //         phpEditor.autoFormatRange({line:0, ch:0}, {line:totalLines});
-    //     },
-    //     toPara:function(value){
-    //         return value.replace(/\_(\w)/g, function(all, letter){
-    //             return letter.toUpperCase();
-    //         });
-    //     },
-    //     firstUpper:function(str){
-    //         return  str.substring(0,1).toUpperCase()+str.substring(1);
-    //     }
-    // });
+    let wxPayGenerator = Class.extend({
+        init:function () {
+            this.para = ["mch_id","app_id","partner_trade_no","nonce_str"
+                ];
+        },
+        run:function(){
+            //生成GEI/SET/EXIST
+            s='';
+            let that = this;
+            $.each(this.para,function(index,value){
+                s+='public function Set'+that.firstUpper(that.toPara(value))+'($'+that.toPara(value)+'){\n';
+                s+='$this->para["'+value+'"]=$'+that.toPara(value)+";\n";
+                s+='}\n';
+                s+='public function Get'+that.firstUpper(that.toPara(value))+'(){\n';
+                s+='return $this->para["'+value+'"];\n';
+                s+='}\n';
+                s+='public function Is'+that.firstUpper(that.toPara(value))+'Exist(){\n';
+                s+='return array_key_exists("'+value+'",$this->para);\n';
+                s+='}\n';
+            });
+            phpEditor.setValue(s);
+            let totalLines = phpEditor.lineCount();
+            phpEditor.autoFormatRange({line:0, ch:0}, {line:totalLines});
+        },
+        toPara:function(value){
+            return value.replace(/\_(\w)/g, function(all, letter){
+                return letter.toUpperCase();
+            });
+        },
+        firstUpper:function(str){
+            return  str.substring(0,1).toUpperCase()+str.substring(1);
+        }
+    });
 });

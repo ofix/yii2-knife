@@ -40,6 +40,7 @@ class QueryAsset extends AssetBundle
 //        'js/sidebar.js',
         'js/components.js',
 //        'js/jquery.mCustomScrollbar.concat.min.js',
+        'js/token.js',
         'js/codemirror-5.37.0/lib/codemirror.js',
         'js/codemirror-5.37.0/addon/autoformatrange/autoFormatRange.js',
         'js/codemirror-5.37.0/addon/edit/matchbrackets.js',
